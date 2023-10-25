@@ -1,0 +1,40 @@
+Terraform variables are a way to store values that can be reused throughout your Terraform configuration.
+Simple Values variables
+As the name suggests Simple Values variables are which hold only a single value. Here the types of Simple Value variables -
+1.    string
+2.    number
+3.    bool
+1.2 Collection Variable
+In the collection variable, it consists of -
+1.    List
+2.    Map
+3.    Set
+
+syntax: variable "instance_type" {
+   description = "Instance type t2.micro"
+   type        = string
+   default     = "t2.micro"
+}
+Let's replace the hardcoded value of instance_type with variable
+ instance_type = var.instance_type
+
+list syntax:
+variable "user_names" {
+  description = "IAM usernames"
+  type        = list(string)
+  default     = ["user1", "user2", "user3"]
+}
+resource "aws_iam_user" "example" {
+  count = length(var.user_names)
+  name  = var.user_names[count.index]
+}
+Map Variable: Terraform also supports the map variable type where you can define the key-valye pair.
+variable "project_environment" {
+  description = "project name and environment"
+  type        = map(string)
+  default     = {
+    project     = "project-cloud",
+    environment = "dev"
+  }
+}
+
