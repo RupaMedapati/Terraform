@@ -1,0 +1,26 @@
+Terraform provisioners are used to perform certain custom actions or tasks either on local machine or on remote machine.
+1)runnung custom shellscript on local machine
+2)runnung custom shellscript on remote machine
+3)copy file to the remote machine
+
+Generic provisioners: file,localexec,remote-exec
+file provisioners: used to transfer files from one machine to another.
+provisioner "file" {
+    source      = "conf/myapp.conf"
+    destination = "/etc/myapp.conf"
+  }
+connection {
+      type        = "ssh"
+      host        = self.public_ip
+      user        = "ubuntu"
+      private_key = file("C:/Users/rupa.b.medapati/Downloads/webserverkey")
+      timeout     = "4m"
+   }
+Remote-exec file provisioner: I tis always going to work on remote machine.
+provisioner "remote-exec" {
+    inline = [
+      "touch hello.txt",
+      "echo helloworld remote provisioner >> hello.txt",
+      “mkdir Mr-cloud-book”,
+    ]
+}
