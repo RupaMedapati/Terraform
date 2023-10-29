@@ -1,0 +1,5 @@
+datasource is used to fetch data dynamically.
+  syntax: data "type-of-data" "your-friendly-name" {
+  }
+data.<typeofdata>.<yourfriendlyname>.argument
+  ex: data.aws_ami.amazon_linux2.id
