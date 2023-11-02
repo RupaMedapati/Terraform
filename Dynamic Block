@@ -1,95 +1,67 @@
 Terraform Dynamic Block is important when you want to create multiple resources inside of similar types, so instead of copy and pasting the same terraform configuration in the terraform file does not make sense and it is not feasible if you need to create hundreds of resources using terraform.
 If we describe terraform dynamic block in simple words then it is for loop which is going to iterate over and will help you to create a dynamic resource. With the help of dynamic blocks you can create nested repeatable blocks such as settings, ingress rules etc...
 ex:
-terraform {
-  required_providers {
-    aws = {
-      source = "hashicorp/aws"
-      version = "5.20.1"
+
+resource "aws_vpc" "example_vpc" {
+  cidr_block =  var.cidr_block # Define your VPC CIDR range
+}
+
+resource "aws_subnet" "prod_subnet" {
+  vpc_id     = aws_vpc.example_vpc.id
+  cidr_block = "10.0.1.0/24"  # Define your production subnet CIDR range
+  #availability_zone = var.instanceregion # Change to your desired availability zone
+}
+
+resource "aws_subnet" "nonprod_subnet" {
+  vpc_id     = aws_vpc.example_vpc.id
+  cidr_block = "10.0.2.0/24"  # Define your non-production subnet CIDR range
+  #availability_zone = var.instanceregion  # Change to your desired availability zone
+}
+
+resource "aws_security_group" "subnet_communication" {
+  name        = "subnet-communication"
+  description = "Allow communication between prod and nonprod subnets"
+  vpc_id = aws_vpc.example_vpc.id
+
+  dynamic "ingress" {
+    for_each = [80, 443]
+
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = [aws_subnet.prod_subnet.cidr_block, aws_subnet.nonprod_subnet.cidr_block]
     }
   }
 }
+resource "aws_instance" "prod_instance" {
+  count         = 2
+  ami           = "ami-08cba41c585e4a2e2"  # Replace with the desired AMI ID
+  instance_type = var.instance_type      # Replace with the desired instance type
+  subnet_id     = aws_subnet.prod_subnet.id
 
-provider "aws" {
-  region = var.region
-  access_key = "AKIAUIVLG47YBCHBDJNL"
-  secret_key = "WGS5Ce5z/HWWefTyvI3oj4OOL6c8FQRFLeXs682c"
-}
-resource "aws_vpc" "main" {
-  cidr_block       = var.cidr_block
-  tags = {
-    Name = "networkwithec22"
+  root_block_device {
+    volume_size = 8  # Root volume size in GB
   }
-}
-resource "aws_subnet" "prodsubnet" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
 
-  tags = {
-    Name = "prodsubnet"
+  ebs_block_device {
+    device_name = "/dev/sdf"
+    volume_size = 50  # Additional disk size for production instances
+    volume_type = "gp2"
   }
-}
-resource "aws_subnet" "nonprodsubnet" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.2.0/24"
 
-  tags = {
-    Name = "nonprodsubnet"
+  vpc_security_group_ids = [aws_security_group.subnet_communication.id]
+}
+
+resource "aws_instance" "nonprod_instance" {
+  count         = 2
+  ami           = var.instance_type  # Replace with the desired AMI ID
+  instance_type = "t2.micro"      # Replace with the desired instance type
+  subnet_id     = aws_subnet.nonprod_subnet.id
+
+  root_block_device {
+    volume_size = 8  # Root volume size in GB
   }
-}
-resource "aws_instance" "prodsubnetinstance" {
-    
-  ami           = "ami-0dbc3d7bc646e8516"
-  instance_type = "t2.micro"
-  subnet_id = aws_subnet.prodsubnet.id
-  associate_public_ip_address = true
 
-
-  tags = {
-    Name = "prodsubnetinstances22"
-  }
-}
-resource "aws_instance" "nonorodsubnetinstance" {
-    
-  ami           = "ami-0dbc3d7bc646e8516"
-  instance_type = "t2.micro"
-  subnet_id = aws_subnet.nonprodsubnet.id
-  associate_public_ip_address = true
-
-
-  tags = {
-    Name = "nonprodsubnetinstances22"
-  }
-}
-resource "aws_security_group" "communicationbetweensubnets" {
-  name_prefix = "communiationbetweensubnets"
-  vpc_id = aws_vpc.main.id
-}
-
-variable "allowed_ports" {
-  type    = list(number)
-  default = [80, 443]
-}
-
-
-resource "aws_security_group" "main" {
-   name   = "resource_with_dynamic_block"
-   vpc_id = aws_vpc.main.id
-
-   dynamic "ingress" {
-      for_each = var.allowed_ports
-      iterator = port
-
-      content {
-         
-         from_port   = port.value
-         to_port     = port.value
-         protocol    = "tcp"
-         cidr_blocks = ["0.0.0.0/0"]
-      }
-   }
-
-   tags = {
-      Name = "AWS security group dynamic block"
-   }
+  vpc_security_group_ids = [aws_security_group.subnet_communication.id]
 }
