@@ -1,5 +1,14 @@
 datasource is used to fetch data dynamically.
-  syntax: data "type-of-data" "your-friendly-name" {
-  }
-data.<typeofdata>.<yourfriendlyname>.argument
-  ex: data.aws_ami.amazon_linux2.id
+  data "aws_vpc" "existing_vpc" {
+    filter {
+        name = "tag:Name"
+        values = ["defaultvpc"]
+      
+    }
+  
+}
+resource "aws_subnet" "prod_subnet" {
+  vpc_id     = "${data.aws_vpc.existing_vpc.id}"
+  cidr_block = "10.0.1.0/24"  # Define your production subnet CIDR range
+  #availability_zone = var.instanceregion # Change to your desired availability zone
+}
