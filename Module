@@ -1,0 +1,1 @@
+Module: are containers for multiple resources that are used together. A module consists of collection of .tf files kept in a directory.
