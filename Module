@@ -1,1 +1,2 @@
 Module: are containers for multiple resources that are used together. A module consists of collection of .tf files kept in a directory.
+Terraform module usually the root module of a config can call other modules to include their resources into the configuration.
