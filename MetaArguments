@@ -93,3 +93,44 @@ For list -
 For Map -
 {for <KEY>, <VALUE> in <MAP> : <OUTPUT_KEY> => <OUTPUT_VALUE>} 
 
+
+
+foreach:Terraform for_each is a meta argument that helps in creating multiple instances of a defined resource. 
+It also provides us with the flexibility of dynamically setting the attributes of each resource
+for_each primarily works with a set of strings (set(string)) and map of strings (map(string)).
+When for_each meta-argument is used in a resource block, a special object each is automatically available to refer to each instance created by the for_each.
+set(string ) ex:
+variable "instance_set" {
+  type = set(string)
+  default = ["Instance A", "Instance B"]
+}
+
+resource "aws_instance" "by_set" {
+  for_each = var.instance_set
+  ami = "ami-0b08bfc6ff7069aff"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = each.value
+  }
+}
+
+map(string):The map type provides a “set” of key value pairs,
+ex: variable "instance_map" {
+  type = map(string)
+  default = {
+    "inst_a" = "Instance A",
+    "inst_b" = "Instance B"
+  }
+}
+resource "aws_instance" "by_map" {
+  for_each = var.instance_map
+  ami = "ami-0b08bfc6ff7069aff"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = each.value
+    ID = each.key
+  }
+}
+
